@@ -3,7 +3,8 @@ import time
 
 
 class UnixDate(object):
-    iso_format_fmt = "%Y-%m-%dT%H:%M:%S"
+    ISO_DATE_FMT = "%Y-%m-%dT%H:%M:%S"
+    AWS_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%f+0000"
 
     """
     Utilities to convert dates to Unix time and back.
@@ -45,24 +46,39 @@ class UnixDate(object):
         return time.mktime(timetuple)
 
     @classmethod
-    def to_unix_time_from_iso_format(cls, iso_format):
+    def to_unix_time_from_iso_format(cls, date_str):
         """
-        Old recording used that string isoformat in the create_time,
+        Parse ISO formatted strings back into unix timestamp
+
+        :param date_str: String of date in ISO format
+        :type date_str: str|unicode
         :rtype: float
         :return: The Unix epoch: number of seconds that have elapsed since January 1, 1970
         """
 
-        if isinstance(iso_format, (unicode, str,)):
+        if isinstance(date_str, (unicode, str,)):
             # is on 0 milliseconds
             # here are few solutions:
             #   http://stackoverflow.com/questions/30584364/python-strptime-format-with-optional-bits
 
-            no_ms = iso_format.split('.')[0]
-            value = datetime.datetime.strptime(no_ms, cls.iso_format_fmt)
+            no_ms = date_str.split('.')[0]
+            value = datetime.datetime.strptime(no_ms, cls.ISO_DATE_FMT)
             return cls.to_unix_time(value)
 
         else:
-            raise ValueError("Failed convert {} {} to unix time".format(iso_format.__class__, iso_format))
+            raise ValueError("Failed convert {} {} to unix time".format(str.__class__, date_str))
+
+    @classmethod
+    def to_unix_time_from_aws_format(cls, date_str):
+        """
+        Parse AWS date formats back into unix timestamp
+
+        :param date_str: String of date in ISO format
+        :type date_str: str
+        :rtype: float
+        :return: The Unix epoch: number of seconds that have elapsed since January 1, 1970
+        """
+        return cls.to_unix_time(datetime.datetime.strptime(date_str, cls.AWS_DATE_FORMAT))
 
     @classmethod
     def to_datetime(cls, unix_time_sec):
