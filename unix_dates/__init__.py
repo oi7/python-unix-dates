@@ -5,6 +5,7 @@ import time
 class UnixDate(object):
     ISO_DATE_FMT = "%Y-%m-%dT%H:%M:%S"
     AWS_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%f+0000"
+    UTC_OFFSET_SECONDS = -1 * (time.timezone if (time.localtime().tm_isdst == 0) else time.altzone)
 
     """
     Utilities to convert dates to Unix time and back.
@@ -13,16 +14,21 @@ class UnixDate(object):
     time-zones, efficiently, without having to parse strings back and forth.
     """
 
-    class UTCTimeZoneInfo(datetime.tzinfo):
-
-        UTC_OFFSET_SECONDS = -1 * (time.timezone if (time.localtime().tm_isdst == 0) else time.altzone)
-
+    class UTCLocalTimeZoneInfo(datetime.tzinfo):
         def utcoffset(self, dt):
-            return datetime.timedelta(seconds=self.UTC_OFFSET_SECONDS)
+            return datetime.timedelta(seconds=UnixDate.UTC_OFFSET_SECONDS)
 
         def dst(self, dt):
             return datetime.timedelta(0)
 
+    class UTCTimeZoneInfo(datetime.tzinfo):
+        def utcoffset(self, dt):
+            return datetime.timedelta(seconds=0)
+
+        def dst(self, dt):
+            return datetime.timedelta(0)
+
+    LOCAL_UTC = UTCLocalTimeZoneInfo()
     UTC = UTCTimeZoneInfo()
 
     @classmethod
@@ -43,7 +49,15 @@ class UnixDate(object):
         """
 
         timetuple = dt.timetuple()
-        return time.mktime(timetuple)
+        unix_time = time.mktime(timetuple)
+
+        if dt.tzinfo:
+            # if it is not a naive, add the time zone
+            utcoffset = dt.tzinfo.utcoffset(dt)
+            seconds = utcoffset.days * 24 * 60 * 60 + utcoffset.seconds
+            unix_time -= seconds - cls.UTC_OFFSET_SECONDS
+
+        return unix_time
 
     @classmethod
     def to_unix_time_from_iso_format(cls, date_str):
@@ -81,13 +95,15 @@ class UnixDate(object):
         return cls.to_unix_time(datetime.datetime.strptime(date_str, cls.AWS_DATE_FORMAT))
 
     @classmethod
-    def to_datetime(cls, unix_time_sec):
+    def to_datetime(cls, unix_time_sec, tz=LOCAL_UTC):
         """
         :type unix_time_sec: float
+        :type tz: datetime.tzinfo
+        :param tz: When None, will create an 'offset naive date'. Otherwise, return 'offset aware date'. Default to
+                   convert to the platform locale
         :rtype: datetime.datetime
         """
-
-        return datetime.datetime.fromtimestamp(timestamp=unix_time_sec, tz=cls.UTC)
+        return datetime.datetime.fromtimestamp(timestamp=unix_time_sec, tz=tz)
 
     @classmethod
     def to_naive_datetime(cls, unix_time_sec):

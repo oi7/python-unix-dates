@@ -1,11 +1,30 @@
 import unittest
 import datetime
+import time
 from unix_dates import UnixDate, UnixTimeDelta
 
 
 class TestUnixDate(unittest.TestCase):
-    def test_date(self):
+    def test_naive(self):
         now = datetime.datetime.now()
+
+        unix_time = UnixDate.to_unix_time(now)
+
+        back_datetime = UnixDate.to_datetime(unix_time, tz=None)
+        self.assertEqual(back_datetime.year, now.year)
+        self.assertEqual(back_datetime.month, now.month)
+        self.assertEqual(back_datetime.day, now.day)
+        self.assertEqual(back_datetime.hour, now.hour)
+        self.assertEqual(back_datetime.minute, now.minute)
+        self.assertEqual(back_datetime.second, now.second)
+
+        back_unix_time = UnixDate.to_unix_time(back_datetime)
+        self.assertEqual(back_unix_time, unix_time)
+        self.assertEqual(UnixDate.to_datetime(back_unix_time, tz=None), back_datetime)
+
+    def test_not_naive(self):
+        now = datetime.datetime.now(tz=UnixDate.LOCAL_UTC)
+
         unix_time = UnixDate.to_unix_time(now)
 
         back_datetime = UnixDate.to_datetime(unix_time)
@@ -19,6 +38,23 @@ class TestUnixDate(unittest.TestCase):
         back_unix_time = UnixDate.to_unix_time(back_datetime)
         self.assertEqual(back_unix_time, unix_time)
         self.assertEqual(UnixDate.to_datetime(back_unix_time), back_datetime)
+
+    def test_time_zeons(self):
+        utc = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.UTC)
+        local = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.LOCAL_UTC)
+
+        utc_offset_seconds = (time.timezone if (time.localtime().tm_isdst == 0) else time.altzone)
+        utc_offset_hours = utc_offset_seconds / (60 * 60)
+
+        self.assertEqual((local - utc).seconds, utc_offset_seconds)
+
+        utc = datetime.datetime(2016, 1, 1, 12 + utc_offset_hours, 0, 0, 0, tzinfo=UnixDate.UTC)
+        local = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.LOCAL_UTC)
+
+        self.assertEqual((local - utc).seconds, 0)
+        utc_ut = UnixDate.to_unix_time(utc)
+        local_ut = UnixDate.to_unix_time(local)
+        self.assertEqual(local_ut, utc_ut)
 
     def test_parsing(self):
         d = UnixDate.to_unix_time_from_iso_format("2008-09-03T20:56:35.450686Z")
@@ -47,3 +83,22 @@ class TestUnixDate(unittest.TestCase):
         self.assertEqual(UnixTimeDelta.calc(minutes=1), 60)
         self.assertEqual(UnixTimeDelta.calc(hours=1), 3600)
         self.assertEqual(UnixTimeDelta.calc(days=1), 3600 * 24)
+
+    def test_time_zones(self):
+        utc = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.UTC)
+        local = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.LOCAL_UTC)
+
+        utc_offset_seconds = (time.timezone if (time.localtime().tm_isdst == 0) else time.altzone)
+        utc_offset_hours = utc_offset_seconds / (60 * 60)
+
+        self.assertEqual((local - utc).seconds, utc_offset_seconds)
+
+        utc = datetime.datetime(2016, 1, 1, 12 + utc_offset_hours, 0, 0, 0, tzinfo=UnixDate.UTC)
+        local = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.LOCAL_UTC)
+
+        self.assertEqual((local - utc).seconds, 0)
+        utc_ut = UnixDate.to_unix_time(utc)
+        local_ut = UnixDate.to_unix_time(local)
+        self.assertEqual(local_ut, utc_ut)
+
+
