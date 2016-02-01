@@ -5,7 +5,7 @@ here = path.abspath(path.dirname(__file__))
 
 setup(
     name='unix_dates',
-    version='0.3',
+    version='0.4',
     description='Python Unix Dates conversion utilities',
     url='https://github.com/ophirh/python-unix-dates',
     author='Ophir',
