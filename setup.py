@@ -2,7 +2,7 @@ from setuptools import setup
 from os import path
 from unix_dates import __version__
 
-here = path.abspath(path.dirname(_  _file__))
+here = path.abspath(path.dirname(__file__))
 
 setup(
     name='unix_dates',
