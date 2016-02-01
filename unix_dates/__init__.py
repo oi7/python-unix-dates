@@ -2,6 +2,9 @@ import datetime
 import time
 
 
+__version__ = 0.4
+
+
 class UnixDate(object):
     ISO_DATE_FMT = "%Y-%m-%dT%H:%M:%S"
     AWS_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%f+0000"

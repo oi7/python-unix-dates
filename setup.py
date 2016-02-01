@@ -1,11 +1,12 @@
 from setuptools import setup
 from os import path
+from unix_dates import __version__
 
-here = path.abspath(path.dirname(__file__))
+here = path.abspath(path.dirname(_  _file__))
 
 setup(
     name='unix_dates',
-    version='0.4',
+    version=__version__,
     description='Python Unix Dates conversion utilities',
     url='https://github.com/ophirh/python-unix-dates',
     author='Ophir',
