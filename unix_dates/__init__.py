@@ -129,3 +129,27 @@ class UnixTimeDelta(object):
                minutes * 60 + \
                seconds + \
                millis / 1000
+
+    @classmethod
+    def hour_of_the_day(cls, unix_time_sec):
+        """
+        return the hour of the day based 0
+        :type unix_time_sec: float
+        :rtype: int
+        """
+
+        return int((unix_time_sec % (24 * 60 * 60)) / (60 * 60))
+
+
+    @classmethod
+    def to_round_hour(cls, unix_time_sec):
+        """
+        return the hour of the day based 0
+        :type unix_time_sec: float
+        :rtype: int
+        """
+
+        unix_time_sec -= unix_time_sec % 3600  # make it round hour
+        return unix_time_sec
+
+

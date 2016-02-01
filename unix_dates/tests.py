@@ -101,4 +101,17 @@ class TestUnixDate(unittest.TestCase):
         local_ut = UnixDate.to_unix_time(local)
         self.assertEqual(local_ut, utc_ut)
 
+    def test_hour_of_the_day(self):
+        utc = datetime.datetime(2016, 1, 1, 14, 0, 0, 0, tzinfo=UnixDate.UTC)
+        utc_ut = UnixDate.to_unix_time(utc)
+        hour_of_the_day = UnixTimeDelta.hour_of_the_day(utc_ut)
+        self.assertEqual(hour_of_the_day, utc.hour)
 
+    def test_to_round_hour(self):
+        utc_with_sec = datetime.datetime(2016, 1, 1, 14, 3, 3, 1)
+        utc_ut_with_sec = UnixDate.to_unix_time(utc_with_sec)
+        utc_without_sec = datetime.datetime(2016, 1, 1, 14, 0, 0, 0)
+        utc_ut_without_sec = UnixDate.to_unix_time(utc_without_sec)
+
+        round_hour = UnixTimeDelta.to_round_hour(utc_ut_with_sec)
+        self.assertEqual(round_hour, utc_ut_without_sec)
