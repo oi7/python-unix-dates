@@ -24,7 +24,10 @@ class TestUnixDate(unittest.TestCase):
 
     def test_not_naive(self):
         now = datetime.datetime.now(tz=UnixDate.LOCAL_UTC)
+        now2 = UnixDate.to_datetime(UnixDate.now())
 
+        self.assertEquals(now.day, now2.day)
+        self.assertEquals(now.hour, now2.hour)
         unix_time = UnixDate.to_unix_time(now)
 
         back_datetime = UnixDate.to_datetime(unix_time)
@@ -38,23 +41,6 @@ class TestUnixDate(unittest.TestCase):
         back_unix_time = UnixDate.to_unix_time(back_datetime)
         self.assertEqual(back_unix_time, unix_time)
         self.assertEqual(UnixDate.to_datetime(back_unix_time), back_datetime)
-
-    def test_time_zeons(self):
-        utc = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.UTC)
-        local = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.LOCAL_UTC)
-
-        utc_offset_seconds = (time.timezone if (time.localtime().tm_isdst == 0) else time.altzone)
-        utc_offset_hours = utc_offset_seconds / (60 * 60)
-
-        self.assertEqual((local - utc).seconds, utc_offset_seconds)
-
-        utc = datetime.datetime(2016, 1, 1, 12 + utc_offset_hours, 0, 0, 0, tzinfo=UnixDate.UTC)
-        local = datetime.datetime(2016, 1, 1, 12, 0, 0, 0, tzinfo=UnixDate.LOCAL_UTC)
-
-        self.assertEqual((local - utc).seconds, 0)
-        utc_ut = UnixDate.to_unix_time(utc)
-        local_ut = UnixDate.to_unix_time(local)
-        self.assertEqual(local_ut, utc_ut)
 
     def test_parsing(self):
         d = UnixDate.to_unix_time_from_iso_format("2008-09-03T20:56:35.450686Z")
@@ -100,18 +86,3 @@ class TestUnixDate(unittest.TestCase):
         utc_ut = UnixDate.to_unix_time(utc)
         local_ut = UnixDate.to_unix_time(local)
         self.assertEqual(local_ut, utc_ut)
-
-    def test_hour_of_the_day(self):
-        utc = datetime.datetime(2016, 1, 1, 14, 0, 0, 0, tzinfo=UnixDate.UTC)
-        utc_ut = UnixDate.to_unix_time(utc)
-        hour_of_the_day = UnixTimeDelta.hour_of_the_day(utc_ut)
-        self.assertEqual(hour_of_the_day, utc.hour)
-
-    def test_to_round_hour(self):
-        utc_with_sec = datetime.datetime(2016, 1, 1, 14, 3, 3, 1)
-        utc_ut_with_sec = UnixDate.to_unix_time(utc_with_sec)
-        utc_without_sec = datetime.datetime(2016, 1, 1, 14, 0, 0, 0)
-        utc_ut_without_sec = UnixDate.to_unix_time(utc_without_sec)
-
-        round_hour = UnixTimeDelta.to_round_hour(utc_ut_with_sec)
-        self.assertEqual(round_hour, utc_ut_without_sec)

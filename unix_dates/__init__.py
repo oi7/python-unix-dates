@@ -1,14 +1,14 @@
 import datetime
 import time
 
-
-__version__ = 0.4
+__version__ = "0.4.1"
 
 
 class UnixDate(object):
     ISO_DATE_FMT = "%Y-%m-%dT%H:%M:%S"
     AWS_DATE_FORMAT = "%Y-%m-%dT%H:%M:%S.%f+0000"
     UTC_OFFSET_SECONDS = -1 * (time.timezone if (time.localtime().tm_isdst == 0) else time.altzone)
+    DST_OFFSET_SECONDS = -1 * 0 if (time.localtime().tm_isdst == 0) else (time.timezone - time.altzone)
 
     """
     Utilities to convert dates to Unix time and back.
@@ -22,7 +22,7 @@ class UnixDate(object):
             return datetime.timedelta(seconds=UnixDate.UTC_OFFSET_SECONDS)
 
         def dst(self, dt):
-            return datetime.timedelta(0)
+            return datetime.timedelta(seconds=UnixDate.DST_OFFSET_SECONDS)
 
     class UTCTimeZoneInfo(datetime.tzinfo):
         def utcoffset(self, dt):
@@ -40,7 +40,7 @@ class UnixDate(object):
         :rtype: float
         :return: The Unix epoch: number of seconds that have elapsed since January 1, 1970 (UTC)
         """
-        return cls.to_unix_time(datetime.datetime.now())
+        return time.time()
 
     @classmethod
     def to_unix_time(cls, dt):
@@ -54,11 +54,11 @@ class UnixDate(object):
         timetuple = dt.timetuple()
         unix_time = time.mktime(timetuple)
 
-        if dt.tzinfo:
+        if dt.tzinfo is not None and dt.tzinfo != UnixDate.LOCAL_UTC:
             # if it is not a naive, add the time zone
-            utcoffset = dt.tzinfo.utcoffset(dt)
-            seconds = utcoffset.days * 24 * 60 * 60 + utcoffset.seconds
-            unix_time -= seconds - cls.UTC_OFFSET_SECONDS
+            utc_offset = cls.UTC_OFFSET_SECONDS - dt.tzinfo.utcoffset(dt=dt).seconds
+            dt_offset = cls.DST_OFFSET_SECONDS - dt.tzinfo.dst(dt=dt).seconds
+            unix_time += (utc_offset - dt_offset)
 
         return unix_time
 
@@ -132,27 +132,3 @@ class UnixTimeDelta(object):
                minutes * 60 + \
                seconds + \
                millis / 1000
-
-    @classmethod
-    def hour_of_the_day(cls, unix_time_sec):
-        """
-        return the hour of the day based 0
-        :type unix_time_sec: float
-        :rtype: int
-        """
-
-        return int((unix_time_sec % (24 * 60 * 60)) / (60 * 60))
-
-
-    @classmethod
-    def to_round_hour(cls, unix_time_sec):
-        """
-        return the hour of the day based 0
-        :type unix_time_sec: float
-        :rtype: int
-        """
-
-        unix_time_sec -= unix_time_sec % 3600  # make it round hour
-        return unix_time_sec
-
-
